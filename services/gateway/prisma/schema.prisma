@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(uuid())
+  email         String          @unique
+  passwordHash  String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  identities    TikTokIdentity[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash         String    @unique
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  replacedByTokenId String?
+  createdAt         DateTime  @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model TikTokIdentity {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tiktokUserId  String   @unique
+  username      String
+  accessToken   String
+  refreshToken  String
+  tokenExpiresAt DateTime
+  linkedAt      DateTime @default(now())
+
+  @@index([userId])
+  @@map("tiktok_identities")
+}
+
+model StellarWallet {
+  id            String   @id @default(uuid())
+  userId        String
+  publicKey     String   @unique
+  isPrimary     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@map("stellar_wallets")
+}

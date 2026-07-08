@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: backend
+      POSTGRES_PASSWORD: backend
+      POSTGRES_MULTIPLE_DATABASES: gateway,analytics
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-multi-db.sh:/docker-entrypoint-initdb.d/init-multi-db.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backend"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    build:
+      context: ./services/gateway
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://backend:backend@postgres:5432/gateway?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: change-me-in-production
+      # Dev-only key so `docker compose up` works out of the box. Generate a
+      # real one for any non-local environment: `openssl rand -base64 32`.
+      ENCRYPTION_KEY: +eMeB8tt73wat8cvNY35dxxBN+2WepCZzjjk2HtOS9c=
+      ANALYTICS_SERVICE_URL: http://analytics-service:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  analytics-service:
+    build:
+      context: ./services/analytics-service
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: development
+      PORT: 8000
+      DATABASE_URL: postgresql+asyncpg://backend:backend@postgres:5432/analytics
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

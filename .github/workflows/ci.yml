@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  gateway:
+    name: Gateway (Node)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/gateway
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: backend
+          POSTGRES_PASSWORD: backend
+          POSTGRES_DB: gateway
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U backend"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: services/gateway/package-lock.json
+      - run: npm install
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npx prettier --check "src/**/*.ts" "tests/**/*.ts"
+      - run: npm run build
+      - run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://backend:backend@localhost:5432/gateway
+      - run: npm test
+        env:
+          DATABASE_URL: postgresql://backend:backend@localhost:5432/gateway
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret-that-is-long-enough
+          ENCRYPTION_KEY: 4nZOZUwLmw5JBEdvRjmNAbcwX+zM5QvX06HJXncDSvA=
+
+  analytics-service:
+    name: Analytics Service (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/analytics-service
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: backend
+          POSTGRES_PASSWORD: backend
+          POSTGRES_DB: analytics
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U backend"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: services/analytics-service/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: alembic upgrade head
+        env:
+          DATABASE_URL: postgresql+asyncpg://backend:backend@localhost:5432/analytics
+      - run: pytest
