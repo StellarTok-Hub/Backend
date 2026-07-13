@@ -56,6 +56,7 @@ jobs:
           DATABASE_URL: postgresql://backend:backend@localhost:5432/gateway
           REDIS_URL: redis://localhost:6379
           JWT_SECRET: test-secret-that-is-long-enough
+          OAUTH_STATE_SECRET: test-oauth-state-secret-that-is-long-enough
           ENCRYPTION_KEY: 4nZOZUwLmw5JBEdvRjmNAbcwX+zM5QvX06HJXncDSvA=
 
   analytics-service:
