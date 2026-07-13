@@ -24,4 +24,13 @@ describe('oauthState.service', () => {
 
     expect(() => verifyOAuthState(accessToken, 'user-1')).toThrow();
   });
+
+  it('rejects a state token signed with the wrong secret', () => {
+    const forged = jwt.sign({ userId: 'user-1' }, 'not-the-real-secret', {
+      audience: 'tiktok-oauth-state',
+      expiresIn: '5m',
+    });
+
+    expect(() => verifyOAuthState(forged, 'user-1')).toThrow();
+  });
 });
