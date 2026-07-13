@@ -58,6 +58,7 @@ jobs:
           JWT_SECRET: test-secret-that-is-long-enough
           OAUTH_STATE_SECRET: test-oauth-state-secret-that-is-long-enough
           ENCRYPTION_KEY: 4nZOZUwLmw5JBEdvRjmNAbcwX+zM5QvX06HJXncDSvA=
+          SERVICE_AUTH_SECRET: test-service-auth-secret-that-is-long-enough
 
   analytics-service:
     name: Analytics Service (Python)
