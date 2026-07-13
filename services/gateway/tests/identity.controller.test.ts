@@ -74,4 +74,15 @@ describe('POST /api/v1/identity/link', () => {
     expect(res.status).toBe(201);
     expect(res.body.data.username).toBe('creator');
   });
+
+  it('rejects a request missing the code or state', async () => {
+    const app = createApp();
+
+    const res = await request(app)
+      .post('/api/v1/identity/link')
+      .set('Authorization', authHeaderFor('user-1'))
+      .send({ code: 'auth-code' });
+
+    expect(res.status).toBe(400);
+  });
 });
