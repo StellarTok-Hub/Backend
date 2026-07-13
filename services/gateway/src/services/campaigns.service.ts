@@ -32,7 +32,12 @@ export async function validateCampaign(
   const { data } = await analyticsClient.post<CampaignValidationResult>(
     '/api/v1/campaigns/validate',
     payload,
-    requestId ? { headers: { [REQUEST_ID_HEADER]: requestId } } : undefined,
+    {
+      headers: {
+        'X-Service-Auth': env.SERVICE_AUTH_SECRET,
+        ...(requestId ? { [REQUEST_ID_HEADER]: requestId } : {}),
+      },
+    },
   );
 
   return data;
