@@ -3,6 +3,7 @@ import request from 'supertest';
 import { createApp } from '../src/app';
 import { env } from '../src/config';
 import { ACCESS_TOKEN_AUDIENCE } from '../src/middleware/auth';
+import { createOAuthState } from '../src/services/oauthState.service';
 
 function authHeaderFor(userId: string): string {
   const token = jwt.sign({ id: userId, email: 'user@example.com' }, env.JWT_SECRET, {
@@ -28,5 +29,26 @@ describe('GET /api/v1/identity/tiktok/authorize', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.url).toContain('https://www.tiktok.com/v2/auth/authorize/');
     expect(res.body.data.url).toContain('state=');
+  });
+});
+
+describe('POST /api/v1/identity/link', () => {
+  it('rejects requests without a bearer token', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v1/identity/link').send({ code: 'x', state: 'y' });
+
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects a state token issued for a different user', async () => {
+    const app = createApp();
+    const state = createOAuthState('someone-else');
+
+    const res = await request(app)
+      .post('/api/v1/identity/link')
+      .set('Authorization', authHeaderFor('user-1'))
+      .send({ code: 'auth-code', state });
+
+    expect(res.status).toBe(401);
   });
 });
