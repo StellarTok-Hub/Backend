@@ -41,6 +41,7 @@ services:
       # Dev-only key so `docker compose up` works out of the box. Generate a
       # real one for any non-local environment: `openssl rand -base64 32`.
       ENCRYPTION_KEY: +eMeB8tt73wat8cvNY35dxxBN+2WepCZzjjk2HtOS9c=
+      SERVICE_AUTH_SECRET: change-me-in-production
       ANALYTICS_SERVICE_URL: http://analytics-service:8000
     depends_on:
       postgres:
