@@ -5,6 +5,7 @@ import { env } from '../src/config';
 import { ACCESS_TOKEN_AUDIENCE } from '../src/middleware/auth';
 import * as identityService from '../src/services/identity.service';
 import { createOAuthState } from '../src/services/oauthState.service';
+import { BadGatewayError } from '../src/utils/appError';
 
 function authHeaderFor(userId: string): string {
   const token = jwt.sign({ id: userId, email: 'user@example.com' }, env.JWT_SECRET, {
@@ -84,5 +85,21 @@ describe('POST /api/v1/identity/link', () => {
       .send({ code: 'auth-code' });
 
     expect(res.status).toBe(400);
+  });
+
+  it('propagates a 502 when the upstream link fails', async () => {
+    const app = createApp();
+    const state = createOAuthState('user-1');
+
+    jest
+      .spyOn(identityService, 'linkTikTokIdentity')
+      .mockRejectedValue(new BadGatewayError('TikTok rejected the authorization code'));
+
+    const res = await request(app)
+      .post('/api/v1/identity/link')
+      .set('Authorization', authHeaderFor('user-1'))
+      .send({ code: 'auth-code', state });
+
+    expect(res.status).toBe(502);
   });
 });
