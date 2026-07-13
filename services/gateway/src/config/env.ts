@@ -7,6 +7,10 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
   JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
+  // Deliberately distinct from JWT_SECRET (in addition to the `aud` claim
+  // separation already enforced in oauthState.service.ts) so a leak of one
+  // secret doesn't compromise both access tokens and OAuth-linking state.
+  OAUTH_STATE_SECRET: z.string().min(1, 'OAUTH_STATE_SECRET is required'),
   // Short-lived by design: the refresh token (see REFRESH_TOKEN_TTL_DAYS)
   // carries the actual session and can be revoked; the access token can't.
   JWT_EXPIRES_IN: z.string().default('15m'),
