@@ -56,7 +56,10 @@ export async function exchangeCodeForToken(code: string): Promise<TikTokTokenRes
   }
 
   if (data.error || !data.access_token) {
-    logger.error({ tiktokError: data.error, description: data.error_description }, 'TikTok rejected the token exchange');
+    logger.error(
+      { tiktokError: data.error, description: data.error_description },
+      'TikTok rejected the token exchange',
+    );
     throw new BadGatewayError('TikTok rejected the authorization code');
   }
 
