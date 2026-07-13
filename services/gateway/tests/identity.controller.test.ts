@@ -3,6 +3,7 @@ import request from 'supertest';
 import { createApp } from '../src/app';
 import { env } from '../src/config';
 import { ACCESS_TOKEN_AUDIENCE } from '../src/middleware/auth';
+import * as identityService from '../src/services/identity.service';
 import { createOAuthState } from '../src/services/oauthState.service';
 
 function authHeaderFor(userId: string): string {
@@ -50,5 +51,27 @@ describe('POST /api/v1/identity/link', () => {
       .send({ code: 'auth-code', state });
 
     expect(res.status).toBe(401);
+  });
+
+  it('links the identity when the state matches the caller', async () => {
+    const app = createApp();
+    const state = createOAuthState('user-1');
+
+    jest.spyOn(identityService, 'linkTikTokIdentity').mockResolvedValue({
+      id: 'identity-1',
+      userId: 'user-1',
+      tiktokUserId: 'open-1',
+      username: 'creator',
+      tokenExpiresAt: new Date(),
+      linkedAt: new Date(),
+    });
+
+    const res = await request(app)
+      .post('/api/v1/identity/link')
+      .set('Authorization', authHeaderFor('user-1'))
+      .send({ code: 'auth-code', state });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.username).toBe('creator');
   });
 });
