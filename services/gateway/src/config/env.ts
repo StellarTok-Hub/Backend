@@ -18,6 +18,9 @@ const envSchema = z.object({
   TIKTOK_CLIENT_SECRET: z.string().default(''),
   TIKTOK_REDIRECT_URI: z.string().default(''),
   ANALYTICS_SERVICE_URL: z.string().default('http://localhost:8000'),
+  // Shared secret sent as `X-Service-Auth` on every gateway -> analytics-service
+  // call. analytics-service has no auth of its own otherwise reachable directly.
+  SERVICE_AUTH_SECRET: z.string().min(1, 'SERVICE_AUTH_SECRET is required'),
   // Comma-separated list of origins allowed to make cross-origin browser
   // requests. Empty means no cross-origin requests are allowed.
   ALLOWED_ORIGINS: z.string().default(''),
