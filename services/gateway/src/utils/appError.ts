@@ -26,3 +26,10 @@ export class ConflictError extends AppError {
     super(message, 409);
   }
 }
+
+/** A downstream service (TikTok, analytics-service, ...) failed or refused the request. */
+export class BadGatewayError extends AppError {
+  constructor(message = 'Upstream service error') {
+    super(message, 502);
+  }
+}
