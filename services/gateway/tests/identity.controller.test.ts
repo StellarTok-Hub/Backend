@@ -5,7 +5,7 @@ import { env } from '../src/config';
 import { ACCESS_TOKEN_AUDIENCE } from '../src/middleware/auth';
 import * as identityService from '../src/services/identity.service';
 import { createOAuthState } from '../src/services/oauthState.service';
-import { BadGatewayError } from '../src/utils/appError';
+import { BadGatewayError, NotFoundError } from '../src/utils/appError';
 
 function authHeaderFor(userId: string): string {
   const token = jwt.sign({ id: userId, email: 'user@example.com' }, env.JWT_SECRET, {
@@ -101,5 +101,27 @@ describe('POST /api/v1/identity/link', () => {
       .send({ code: 'auth-code', state });
 
     expect(res.status).toBe(502);
+  });
+});
+
+describe('GET /api/v1/identity', () => {
+  it('rejects requests without a bearer token', async () => {
+    const app = createApp();
+    const res = await request(app).get('/api/v1/identity');
+
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 404 when the caller has no linked identity', async () => {
+    const app = createApp();
+    jest
+      .spyOn(identityService, 'getIdentityForUser')
+      .mockRejectedValue(new NotFoundError('No linked TikTok identity for this user'));
+
+    const res = await request(app)
+      .get('/api/v1/identity')
+      .set('Authorization', authHeaderFor('user-1'));
+
+    expect(res.status).toBe(404);
   });
 });
