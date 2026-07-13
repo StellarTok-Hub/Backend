@@ -37,6 +37,7 @@ services:
       DATABASE_URL: postgresql://backend:backend@postgres:5432/gateway?schema=public
       REDIS_URL: redis://redis:6379
       JWT_SECRET: change-me-in-production
+      OAUTH_STATE_SECRET: change-me-in-production
       # Dev-only key so `docker compose up` works out of the box. Generate a
       # real one for any non-local environment: `openssl rand -base64 32`.
       ENCRYPTION_KEY: +eMeB8tt73wat8cvNY35dxxBN+2WepCZzjjk2HtOS9c=
